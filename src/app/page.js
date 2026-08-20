@@ -93,15 +93,16 @@ export default function Home() {
                 </div>
             </div>
             <div className="grid grid-cols-4 gap-2">
-            {products.map((product) => {
+            {copyoproducts.map((product) => {
                 return (
                   <Link href={`/products/${product.id}`} key={product.id} className="w-fit p-4 bg-gray-50 rounded-xl border border-gray-400">
+                        <img src={product.thumbnail}></img>
                         <p>{product.title}</p>
-                        <p>Price: {product.price}$</p>
+                        <p>{product.rating} stars</p>
                         <p>Brand: {product.brand}</p>
                         <p>Category: {product.category}</p>
                         <p>Stock: {product.stock}</p>
-                        <img src={product.thumbnail}></img>
+                        <p className="text-2xl">{product.price}$</p>
                   </Link>
                 )
             })}
