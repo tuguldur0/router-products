@@ -9,6 +9,7 @@ export default function Home() {
     const [category, setCategory] = useState("")
     const [stock, setStock] = useState("")
     const [thumbnail, setThumbnail] = useState("")
+    const [thumbnailLocal, setThumbnailLocal] = useState();
     const [description, setDescription] = useState("")
     const [rating, setRating] = useState("")
     const [optionsInput, setOptionsInput] = useState("")
@@ -19,23 +20,39 @@ export default function Home() {
         setOptionsInput("");
     }
     const HandleAdd = async () => {
-    const { data, error } = await supabase.from('products').insert({
-      title: title,
-      price: price,
-      brand: brand,
-      category: category,
-      stock: stock,
-      thumbnail: thumbnail,
-      description: description,
-      rating: rating,
-      options: options
-    }).select()
+        if(thumbnailLocal == ""){
+            const { data, error } = await supabase.from('products').insert({
+            title: title,
+            price: price,
+            brand: brand,
+            category: category,
+            stock: stock,
+            description: description,
+            rating: rating,
+            options: options
+            }).select()
+            const { data : StorageData, error : StorageError} = await supabase.storage.from('product-images').upload(title, thumbnailLocal);
+            if (error) {
+                console.log('Error:', error)
+                return
+            }
+            console.log('Success:', data)
+        } else {
+            const { data, error } = await supabase.from('products').insert({
+            title: title,
+            price: price,
+            brand: brand,
+            category: category,
+            stock: stock,
+            thumbnail: thumbnail,
+            description: description,
+            rating: rating,
+            options: options
+            }).select()
+        }
+    
 
-    if (error) {
-        console.error('Error:', error)
-        return
-    }
-    console.log('Success:', data)
+    
     setTitle("");
     setPrice("")
     setBrand("")
@@ -57,13 +74,16 @@ export default function Home() {
                     <input placeholder="brand" value={brand} onChange={(event) => setBrand(event.target.value)} className="border border-gray-200 rounded-md px-2 py-1"></input>
                     <input placeholder="category" value={category} onChange={(event) => setCategory(event.target.value)} className="border border-gray-200 rounded-md px-2 py-1"></input>
                     <input placeholder="stock" value={stock} onChange={(event) => setStock(event.target.value)} className="border border-gray-200 rounded-md px-2 py-1"></input>
-                    <input placeholder="thumbnail" value={thumbnail} onChange={(event) => setThumbnail(event.target.value)} className="border border-gray-200 rounded-md px-2 py-1"></input>
+                    <div className="w-90 flex flex-col items-center gap-2">
+                        <input placeholder="thumbnail" value={thumbnail} onChange={(event) => setThumbnail(event.target.value)} className="border border-gray-200 rounded-md px-2 py-1 w-90"></input>
+                        <p>OR</p>
+                        <input type="file" onChange={(event) => setThumbnailLocal(event.target.files[0])} className="border border-gray-200 rounded-md px-2 py-1 w-90"></input>
+                    </div>
                     <input placeholder="description" value={description} onChange={(event) => setDescription(event.target.value)} className="border border-gray-200 rounded-md px-2 py-1"></input>
                     <input placeholder="rating" value={rating} onChange={(event) => setRating(event.target.value)} className="border border-gray-200 rounded-md px-2 py-1"></input>
                     <div className="flex">
                         <input placeholder="options" value={optionsInput} onChange={(event) => setOptionsInput(event.target.value)} className="border w-55 border-gray-200 rounded-s-md px-2 py-1"></input>
                         <button onClick={() => AddToArray(optionsInput)} className="flex items-center justify-center px-3 py-1.5 font-bold text-white bg-[#1a1a1a] rounded-e-md hover:cursor-pointer transition-all duration-300">Add to options</button>
-
                     </div>
                 </div>
                 <button onClick={HandleAdd} className="flex items-center justify-center px-3 py-1.5 font-bold text-white bg-[#1a1a1a] rounded-md hover:cursor-pointer transition-all duration-300">Add product</button>
