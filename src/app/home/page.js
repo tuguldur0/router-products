@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react"
-import { supabase } from "../../lib/supabase/client";
+import { supabase } from "../../../lib/supabase/client";
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
+    const router = useRouter();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     useEffect(() => {
@@ -68,8 +70,12 @@ export default function Home() {
     if (!products) return <div>Loading...</div>;
 
     return (
-        <div className="flex flex-col gap-6 items-center">
-            <div className="h-7 flex justify-between">
+        <div className="flex flex-col gap-4 items-center">
+          <div className="h-12 gap-4 w-screen bg-emerald-800 flex items-center justify-center text-white text-xl">
+                <button onClick={() => router.push('/home')}>Shop</button>
+                <button onClick={() => router.push('/cart')}>Cart</button>
+          </div>
+            <div className="w-screen h-7 flex justify-between">
                 <div className="flex gap-1">
                     <button onClick={() => filter("all")} className="w-24 h-fits border-2 border-gray-300 rounded-md flex justify-center align-center">All</button>
                     <button onClick={() => filter("50")} className="w-24 h-fits border-2 border-gray-300 rounded-md flex justify-center align-center">Under 50$</button>
@@ -77,7 +83,7 @@ export default function Home() {
                     <button onClick={() => filter("200")} className="w-24 h-fits border-2 border-gray-300 rounded-md flex justify-center align-center">Over 200$</button>
                 </div>
                 <div className="border-2 border-gray-200 rounded-md px-1">
-                    <input onKeyDown={handleSearch} onChange={(event) => {setSearchTerm(event.target.value)}} value={searchTerm} placeholder="Search"></input>
+                    <input className="w-100" onKeyDown={handleSearch} onChange={(event) => {setSearchTerm(event.target.value)}} value={searchTerm} placeholder="Search"></input>
                     <button onClick={() => search(searchTerm.toLowerCase())}>🔍</button>
                 </div>
             </div>
