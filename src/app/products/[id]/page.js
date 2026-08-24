@@ -3,11 +3,13 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "../../../../lib/supabase/client";
+import toast, { Toaster } from 'react-hot-toast';
 
 export default function Home() {
     const { id } = useParams();
     const [item, setItem] = useState(null);
     const [loading, setLoading] = useState(true)
+    const [currentOption, setCurrentOption] = useState("")
     
     useEffect(() => {
         if(!loading) return;
@@ -18,6 +20,17 @@ export default function Home() {
         }
         oeoerg();
      }, [])
+    const addToCart = () => {
+        if(currentOption == "") {
+            toast.error("Please select an option")
+            return;
+        }
+        const currentCart = JSON.parse(localStorage.getItem("cart")) || []
+        const tempItem = {...item, option: currentOption};
+        const tempCart = [...currentCart, tempItem]
+        localStorage.setItem("cart", JSON.stringify(tempCart))
+        toast.success("Added to cart")
+    }
     if (!item) return <div>Loading...</div>;
 
     return (
@@ -30,7 +43,7 @@ export default function Home() {
                     <p className="text-2xl">{item.price}$</p>
                     <div className="flex gap-2">
                         {item.options.map((option, index) => {
-                            return <button className="hover:cursor-pointer border border-gray-200 rounded-md py-1 px-2" key={index}>
+                            return <button onClick={() => setCurrentOption(option)} className={`transition ease-in cursor-pointer border border-gray-200 rounded-md py-1 px-2 ${currentOption === option ? 'bg-black text-white' : ''}`} key={index}>
                                 <p>{option}</p>
                             </button>
                         })}
@@ -38,10 +51,11 @@ export default function Home() {
                     <p className="text-xl">About this item:</p>
                     <p>{item.description}</p>
                     <p>Stock: {item.stock}</p>
-                    <button className="text-white flex items-center justify-center px-3 py-1.5 font-bold bg-[#ff9500] rounded-md hover:cursor-pointer transition-all duration-300">Add to cart</button>
+                    <button onClick={addToCart} className="text-white flex items-center justify-center px-3 py-1.5 font-bold bg-[#ff9500] rounded-md hover:cursor-pointer transition-all duration-300">Add to cart</button>
                     <button className="text-white flex items-center justify-center px-3 py-1.5 font-bold bg-[#FF4500] rounded-md hover:cursor-pointer transition-all duration-300">Buy now</button>
                 </div>
             </div>
+            <Toaster />
         </div>
     )
 }

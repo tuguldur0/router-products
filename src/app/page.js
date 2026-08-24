@@ -22,13 +22,16 @@ export default function Home() {
     const [first, setFirst] = useState(0);
     const [last, setLast] = useState(28);
     const [count, setCount] = useState(1);
-    const [maxCount, setMaxCount] = useState(7)
+    const [maxCount, setMaxCount] = useState(1)
     
-    const search = (term) => {
-        setCopyoproducts(products.filter((product) => product.title.toLowerCase().includes(term)))
-        setFirst(0);
-        setLast(28);
-        setMaxCount(Math.floor(products.filter((product) => product.title.toLowerCase().includes(term)).length)/28)
+    const handleSearch = (event) => {
+      if(event.key === 'Enter'){
+        search(searchTerm.toLowerCase());
+      }
+    }
+    const search = async (term) => {
+        const {data, error} = await supabase.from('products').select().ilike('title', term).select()
+        setCopyoproducts(data)
     }
     const forward = () => {
         if(count < maxCount){
@@ -44,32 +47,18 @@ export default function Home() {
         setCount(count-1)
     }
     }
-    const filter = (term) => {
+    const filter = async (term) => {
         if(term == "all"){
             setCopyoproducts(products)
-            setFirst(0);
-            setLast(28); 
-            setCount(1)
-            setMaxCount(Math.ceil(products.length/28))
         } else if(term == "50"){
-            setCopyoproducts(products.filter((product) => product.price<50))
-            setFirst(0);
-            setLast(28); 
-            setCount(1)
-            setMaxCount(Math.ceil(products.filter((product) => product.price<50).length/28))
+            const { data : fiftydata, error : fiftyerror} = await supabase.from('products').select().lte('price', 50)
+            setCopyoproducts(fiftydata);
         } else if(term == "50-200"){
-            setCopyoproducts(products.filter((product) => product.price>50 && product.price < 200))
-            setFirst(0);
-            setLast(28);
-            setCount(1)
-            setMaxCount(Math.ceil(products.filter((product) => product.price > 50 && product.price < 200).length/28))
+            const { data : middata, error : miderror} = await supabase.from('products').select().gt('price', 50).lte('price', 200)
+            setCopyoproducts(middata);
         } else if(term == "200"){
-            setCopyoproducts(products.filter((product) => product.price>=200))
-            setFirst(0);
-            setLast(28);
-            setCount(1) 
-            setMaxCount(Math.ceil(products.filter((product) => product.price >= 200).length/28))
-
+            const { data : twohundreddata, error : twohundrederror} = await supabase.from('products').select().gt('price', 200)
+            setCopyoproducts(twohundreddata)
         }
     }
 
@@ -88,7 +77,7 @@ export default function Home() {
                     <button onClick={() => filter("200")} className="w-24 h-fits border-2 border-gray-300 rounded-md flex justify-center align-center">Over 200$</button>
                 </div>
                 <div className="border-2 border-gray-200 rounded-md px-1">
-                    <input onChange={(event) => {setSearchTerm(event.target.value)}} value={searchTerm} placeholder="Search"></input>
+                    <input onKeyDown={handleSearch} onChange={(event) => {setSearchTerm(event.target.value)}} value={searchTerm} placeholder="Search"></input>
                     <button onClick={() => search(searchTerm.toLowerCase())}>🔍</button>
                 </div>
             </div>
