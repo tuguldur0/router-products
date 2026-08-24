@@ -64,11 +64,11 @@ export default function Home() {
             setCount(1)
             setMaxCount(Math.ceil(products.filter((product) => product.price > 50 && product.price < 200).length/28))
         } else if(term == "200"){
-            setCopyoproducts(products.filter((product) => product.price>200))
+            setCopyoproducts(products.filter((product) => product.price>=200))
             setFirst(0);
             setLast(28);
             setCount(1) 
-            setMaxCount(Math.ceil(products.filter((product) => product.price > 200).length/28))
+            setMaxCount(Math.ceil(products.filter((product) => product.price >= 200).length/28))
 
         }
     }

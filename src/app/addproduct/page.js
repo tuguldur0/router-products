@@ -16,38 +16,37 @@ export default function Home() {
   const [options, setOptions] = useState([]);
 
   const AddToArray = (input) => {
-    if (input.trim() == "") return;
     setOptions([...options, input]);
     setOptionsInput("");
   };
 
   const HandleAdd = async () => {
     let finalThumbnailUrl = thumbnail;
-
       if (thumbnailLocal) {
-        const fileExt = thumbnailLocal.name.split(".").pop();
         const fileName = `${Date.now()}`;
 
         const { data: storageData, error: storageError } = await supabase.storage.from("product-images").upload(fileName, thumbnailLocal);
 
-        const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(fileName);
+        const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(fileName, {
+            transform: {
+                width: 300,
+                height: 300,
+            },
+        });
         finalThumbnailUrl = urlData.publicUrl;
       }
 
-      const { data, error } = await supabase
-        .from("products")
-        .insert({
+      const { data, error } = await supabase.from("products").insert({
           title: title,
-          price: price,
+          price: parseInt(price),
           brand: brand,
-          category,
+          category: category,
           stock: stock,
           thumbnail: finalThumbnailUrl,
-          description,
-          rating: rating,
-          options,
-        })
-        .select();
+          description: description,
+          rating: parseInt(rating),
+          options: options,
+        }).select();
 
       if (error) {
         console.log("error: ", error)
@@ -80,24 +79,22 @@ export default function Home() {
           <input placeholder="stock" value={stock} onChange={(event) => setStock(event.target.value)} className="border border-gray-200 rounded-md px-2 py-1" />
           
           <div className="w-90 flex flex-col items-center gap-2">
-            <input placeholder="thumbnail url" value={thumbnail} onChange={(event) => setThumbnail(event.target.value)} disabled={thumbnailLocal} className="border border-gray-200 rounded-md px-2 py-1 w-90 disabled:bg-gray-100" />
+            <input placeholder="thumbnail url" value={thumbnail} onChange={(event) => setThumbnail(event.target.value)} disabled={thumbnailLocal} className="border border-gray-200 rounded-md px-2 py-1 w-90" />
             <p>OR</p>
-            <input type="file" onChange={(event) => setThumbnailLocal(event.target.files[0])} disabled={thumbnail} className="border border-gray-200 rounded-md px-2 py-1 w-90 disabled:bg-gray-100" />
+            <input type="file" onChange={(event) => setThumbnailLocal(event.target.files[0])} disabled={thumbnail} className="border border-gray-200 rounded-md px-2 py-1 w-90" />
           </div>
 
           <input placeholder="description" value={description} onChange={(event) => setDescription(event.target.value)} className="border border-gray-200 rounded-md px-2 py-1" />
           <input placeholder="rating" value={rating} onChange={(event) => setRating(event.target.value)} className="border border-gray-200 rounded-md px-2 py-1" />
-          
           <div className="flex flex-col gap-1">
             <div className="flex">
               <input placeholder="options" value={optionsInput} onChange={(event) => setOptionsInput(event.target.value)} className="border w-55 border-gray-200 rounded-s-md px-2 py-1" />
-              <button onClick={() => AddToArray(optionsInput)} className="flex items-center justify-center px-3 py-1.5 font-bold text-white bg-[#1a1a1a] rounded-e-md hover:cursor-pointer transition-all duration-300">Add to options</button>
+              <button onClick={() => AddToArray(optionsInput)} className="flex items-center justify-center px-3 py-1 text-white bg-black rounded-e-md hover:cursor-pointer">Add to options</button>
             </div>
-           
           </div>
         </div>
 
-        <button onClick={HandleAdd} className="flex items-center justify-center px-3 py-1.5 font-bold text-white bg-[#1a1a1a] rounded-md hover:cursor-pointer transition-all duration-300">Add product</button>
+        <button onClick={HandleAdd} className="flex items-center justify-center px-3 py-1 text-white bg-black rounded-md hover:cursor-pointer">Add product</button>
       </div>
     </div>
   );

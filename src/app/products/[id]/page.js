@@ -23,7 +23,7 @@ export default function Home() {
     return (
         <div className="h-screen w-screen flex flex-col items-center justify-center">
             <div className="border-2 border-gray-200 rounded-md flex gap-4 p-2">
-                <img className="w-120" src={item.thumbnail}></img>
+                <img className="w-75 h-75" src={item.thumbnail}></img>
                 <div className="flex flex-col gap-1">
                     <p className="text-2xl">{item.title}</p>
                     <p>Rating: {item.rating} stars</p>
