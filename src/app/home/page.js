@@ -19,19 +19,19 @@ export default function Home() {
     const [maxCount, setMaxCount] = useState(1)
 
     useEffect(() => {
-            if(!loading) return;
-            const stupidAsyncFunc = async () => {
-                const query = supabase.from('products').select()
-                const { data, error } = await query;
-                if(error) console.log(error);
-                 else if (search) {
-                    handleSearch(search)
+        if(!loading) return;
+        const stupidAsyncFunc = async () => {
+            const query = supabase.from('products').select()
+            const { data, error } = await query;
+            if(error) console.log(error);
+            else if (search) {
+                handleSearch(search)
                 }
                 else setProducts(data);
                 }
             stupidAsyncFunc();
             setLoading(false);
-         }, [])
+    }, [])
     const handleSearchOnKeyDown = (event) => {
       if(event.key === 'Enter'){
         handleSearch(searchTerm.toLowerCase());
@@ -66,9 +66,11 @@ export default function Home() {
             const { data : fiftydata, error : fiftyerror} = await supabase.from('products').select().lte('price', 50)
             setCopyoproducts(fiftydata);
         } else if(term == "50-200"){
+            router.push(`/home?filter=${"50-200"}`)
             const { data : middata, error : miderror} = await supabase.from('products').select().gt('price', 50).lte('price', 200)
             setCopyoproducts(middata);
         } else if(term == "200"){
+            router.push(`/home?filter=${200}`)
             const { data : twohundreddata, error : twohundrederror} = await supabase.from('products').select().gt('price', 200)
             setCopyoproducts(twohundreddata)
         }
