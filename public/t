@@ -1,0 +1,182 @@
+"use client"
+
+import Link from "next/link";
+import { useEffect, useState, useCallback } from "react";
+import { supabase } from "../../../lib/supabase/client";
+import { useRouter, useSearchParams } from 'next/navigation';
+
+export default function Home() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const searchQuery = searchParams.get("search") || "";
+
+    const [products, setProducts] = useState([]);
+    const [filteredProducts, setFilteredProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState(searchQuery);
+    const [activeFilter, setActiveFilter] = useState("all");
+
+    // Pagination states
+    const itemsPerPage = 28;
+    const [currentPage, setCurrentPage] = useState(1);
+
+    // Fetch initial products
+    useEffect(() => {
+        const fetchProducts = async () => {
+            setLoading(true);
+            let query = supabase.from('products').select('*');
+
+            if (searchQuery) {
+                query = query.ilike('title', `%${searchQuery}%`);
+            }
+
+            const { data, error } = await query;
+
+            if (error) {
+                console.error("Error fetching products:", error);
+            } else {
+                setProducts(data || []);
+            }
+            setLoading(false);
+        };
+
+        fetchProducts();
+    }, [searchQuery]);
+
+    // Apply local price filtering whenever products or activeFilter changes
+    const applyFilter = useCallback((filterType, productList = products) => {
+        setActiveFilter(filterType);
+        setCurrentPage(1); // Reset to first page on filter change
+
+        let result = [...productList];
+        if (filterType === "50") {
+            result = result.filter(p => p.price <= 50);
+        } else if (filterType === "50-200") {
+            result = result.filter(p => p.price > 50 && p.price <= 200);
+        } else if (filterType === "200") {
+            result = result.filter(p => p.price > 200);
+        }
+
+        setFilteredProducts(result);
+    }, [products]);
+
+    // Re-filter when base products change
+    useEffect(() => {
+        applyFilter(activeFilter, products);
+    }, [products, activeFilter, applyFilter]);
+
+    // Handle search submission
+    const handleSearch = (term) => {
+        if (!term.trim()) {
+            router.push('/home');
+        } else {
+            router.push(`/home?search=${encodeURIComponent(term.trim())}`);
+        }
+    };
+
+    const handleSearchOnKeyDown = (event) => {
+        if (event.key === 'Enter') {
+            handleSearch(searchTerm);
+        }
+    };
+
+    // Pagination Calculations
+    const maxCount = Math.ceil(filteredProducts.length / itemsPerPage) || 1;
+    const paginatedProducts = filteredProducts.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
+    const forward = () => {
+        if (currentPage < maxCount) setCurrentPage(prev => prev + 1);
+    };
+
+    const backward = () => {
+        if (currentPage > 1) setCurrentPage(prev => prev - 1);
+    };
+
+    if (loading) return <div className="p-8 text-center">Loading...</div>;
+
+    return (
+        <div className="flex flex-col gap-4 items-center">
+            {/* Header / Nav */}
+            <div className="h-12 gap-4 w-screen bg-emerald-800 flex items-center justify-center text-white text-xl">
+                <button onClick={() => router.push('/home')}>Shop</button>
+                <button onClick={() => router.push('/cart')}>Cart</button>
+            </div>
+
+            {/* Filter Bar & Search */}
+            <div className="w-full max-w-6xl h-7 flex justify-between px-4">
+                <div className="flex gap-1">
+                    <button 
+                        onClick={() => applyFilter("all")} 
+                        className={`w-24 h-fit border-2 rounded-md ${activeFilter === "all" ? "border-emerald-600 bg-emerald-50" : "border-gray-300"}`}
+                    >
+                        All
+                    </button>
+                    <button 
+                        onClick={() => applyFilter("50")} 
+                        className={`w-24 h-fit border-2 rounded-md ${activeFilter === "50" ? "border-emerald-600 bg-emerald-50" : "border-gray-300"}`}
+                    >
+                        Under $50
+                    </button>
+                    <button 
+                        onClick={() => applyFilter("50-200")} 
+                        className={`w-24 h-fit border-2 rounded-md ${activeFilter === "50-200" ? "border-emerald-600 bg-emerald-50" : "border-gray-300"}`}
+                    >
+                        $50-$200
+                    </button>
+                    <button 
+                        onClick={() => applyFilter("200")} 
+                        className={`w-24 h-fit border-2 rounded-md ${activeFilter === "200" ? "border-emerald-600 bg-emerald-50" : "border-gray-300"}`}
+                    >
+                        Over $200
+                    </button>
+                </div>
+
+                <div className="border-2 border-gray-200 rounded-md px-1 flex items-center">
+                    <input 
+                        className="w-64 outline-none px-1" 
+                        onKeyDown={handleSearchOnKeyDown} 
+                        onChange={(event) => setSearchTerm(event.target.value)} 
+                        value={searchTerm} 
+                        placeholder="Search products..."
+                    />
+                    <button onClick={() => handleSearch(searchTerm)}>🔍</button>
+                </div>
+            </div>
+
+            {/* Product Grid */}
+            <div className="grid grid-cols-4 gap-4 p-4 max-w-6xl w-full">
+                {paginatedProducts.length > 0 ? (
+                    paginatedProducts.map((product) => (
+                        <Link 
+                            href={`/products/${product.id}`} 
+                            key={product.id} 
+                            className="p-4 bg-gray-50 rounded-xl border border-gray-400 flex flex-col justify-between hover:shadow-md transition"
+                        >
+                            <img src={product.thumbnail} alt={product.title} className="h-40 object-cover rounded-md mb-2" />
+                            <div>
+                                <p className="font-bold">{product.title}</p>
+                                <p className="text-sm text-gray-600">{product.rating} ★</p>
+                                <p className="text-sm text-gray-600">Brand: {product.brand}</p>
+                                <p className="text-sm text-gray-600">Category: {product.category}</p>
+                                <p className="text-sm text-gray-600">Stock: {product.stock}</p>
+                            </div>
+                            <p className="text-2xl font-semibold mt-2">${product.price}</p>
+                        </Link>
+                    ))
+                ) : (
+                    <div className="col-span-4 text-center py-8 text-gray-500">No products found.</div>
+                )}
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="flex items-center gap-4 my-4">
+                <button onClick={backward} disabled={currentPage === 1} className="disabled:opacity-30">{'<'}</button>
+                <p>{currentPage} / {maxCount}</p>
+                <button onClick={forward} disabled={currentPage === maxCount} className="disabled:opacity-30">{'>'}</button>  
+            </div>
+        </div>
+    );
+}
