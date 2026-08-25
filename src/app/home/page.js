@@ -3,37 +3,49 @@
 import Link from "next/link";
 import { useEffect, useState } from "react"
 import { supabase } from "../../../lib/supabase/client";
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function Home() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const search = searchParams.get("search");
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    useEffect(() => {
-            if(!loading) return;
-            const stupidAsyncFunc = async () => {
-              const { data, error } = await supabase.from('products').select('*');
-              if(error) console.log(error);
-              else setProducts(data);
-            }
-            stupidAsyncFunc();
-         }, [])
-    
     const [copyoproducts, setCopyoproducts] = useState(products);
     const [searchTerm, setSearchTerm] = useState("");
     const [first, setFirst] = useState(0);
     const [last, setLast] = useState(28);
     const [count, setCount] = useState(1);
     const [maxCount, setMaxCount] = useState(1)
+    const [searchValue, setSearchValue] = useState(search)
+
+    useEffect(() => {
+            if(!loading) return;
+            const stupidAsyncFunc = async () => {
+                const query = supabase.from('products').select()
+                const { data, error } = await query;
+                if(error) console.log(error);
+                 else if (search) {
+                    setProducts(query.ilike("title", `%${searchValue}%`))
+
+                }
+                else setProducts(data);
+                }
+            stupidAsyncFunc();
+            
+         }, [])
     
-    const handleSearch = (event) => {
+    
+    
+    const handleSearchOnKeyDown = (event) => {
       if(event.key === 'Enter'){
-        search(searchTerm.toLowerCase());
+        handleSearch(searchTerm.toLowerCase());
       }
     }
-    const search = async (term) => {
+    const handleSearch = async (term) => {
         const {data, error} = await supabase.from('products').select().ilike('title', term).select()
         setCopyoproducts(data)
+        router.push(`/home?search=${term}`)
     }
     const forward = () => {
         if(count < maxCount){
@@ -83,8 +95,8 @@ export default function Home() {
                     <button onClick={() => filter("200")} className="w-24 h-fits border-2 border-gray-300 rounded-md flex justify-center align-center">Over 200$</button>
                 </div>
                 <div className="border-2 border-gray-200 rounded-md px-1">
-                    <input className="w-100" onKeyDown={handleSearch} onChange={(event) => {setSearchTerm(event.target.value)}} value={searchTerm} placeholder="Search"></input>
-                    <button onClick={() => search(searchTerm.toLowerCase())}>🔍</button>
+                    <input className="w-100" onKeyDown={handleSearchOnKeyDown} onChange={(event) => {setSearchTerm(event.target.value)}} value={searchTerm} placeholder="Search"></input>
+                    <button onClick={() => handleSearch(searchTerm.toLowerCase())}>🔍</button>
                 </div>
             </div>
             <div className="grid grid-cols-4 gap-2">
