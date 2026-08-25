@@ -17,7 +17,6 @@ export default function Home() {
     const [last, setLast] = useState(28);
     const [count, setCount] = useState(1);
     const [maxCount, setMaxCount] = useState(1)
-    const [searchValue, setSearchValue] = useState(search)
 
     useEffect(() => {
             if(!loading) return;
@@ -26,24 +25,20 @@ export default function Home() {
                 const { data, error } = await query;
                 if(error) console.log(error);
                  else if (search) {
-                    setProducts(query.ilike("title", `%${searchValue}%`))
-
+                    handleSearch(search)
                 }
                 else setProducts(data);
                 }
             stupidAsyncFunc();
-            
+            setLoading(false);
          }, [])
-    
-    
-    
     const handleSearchOnKeyDown = (event) => {
       if(event.key === 'Enter'){
         handleSearch(searchTerm.toLowerCase());
       }
     }
     const handleSearch = async (term) => {
-        const {data, error} = await supabase.from('products').select().ilike('title', term).select()
+        const {data, error} = await supabase.from('products').select().ilike('title', `%${term}%`).select()
         setCopyoproducts(data)
         router.push(`/home?search=${term}`)
     }
@@ -63,8 +58,11 @@ export default function Home() {
     }
     const filter = async (term) => {
         if(term == "all"){
+            router.push("/home")
             setCopyoproducts(products)
+            
         } else if(term == "50"){
+            router.push(`/home?filter=${50}`)
             const { data : fiftydata, error : fiftyerror} = await supabase.from('products').select().lte('price', 50)
             setCopyoproducts(fiftydata);
         } else if(term == "50-200"){
