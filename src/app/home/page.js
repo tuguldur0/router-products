@@ -11,12 +11,12 @@ export default function Home() {
     const search = searchParams.get("search");
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [copyoproducts, setCopyoproducts] = useState(products);
+    const [copyoproducts, setCopyoproducts] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [first, setFirst] = useState(0);
     const [last, setLast] = useState(28);
     const [count, setCount] = useState(1);
-    const [maxCount, setMaxCount] = useState(1)
+    const [maxCount, setMaxCount] = useState(1);
 
     useEffect(() => {
         if(!loading) return;
@@ -26,22 +26,28 @@ export default function Home() {
             if(error) console.log(error);
             else if (search) {
                 handleSearch(search)
-                }
-                else setProducts(data);
-                }
-            stupidAsyncFunc();
+            }
+            else {
+                setProducts(data || []);
+                setCopyoproducts(data || []);
+            }
             setLoading(false);
+        }
+        stupidAsyncFunc();
     }, [])
+
     const handleSearchOnKeyDown = (event) => {
       if(event.key === 'Enter'){
         handleSearch(searchTerm.toLowerCase());
       }
     }
+
     const handleSearch = async (term) => {
-        const {data, error} = await supabase.from('products').select().ilike('title', `%${term}%`).select()
-        setCopyoproducts(data)
-        router.push(`/home?search=${term}`)
+        const {data, error} = await supabase.from('products').select().ilike('title', `%${term}%`);
+        setCopyoproducts(data || []);
+        router.push(`/home?search=${term}`);
     }
+
     const forward = () => {
         if(count < maxCount){
         setFirst(first+28);
@@ -49,13 +55,15 @@ export default function Home() {
         setCount(count+1);
         }
     }
+
     const backward = () => {
         if(first != 0 && last != 28){    
         setFirst(first-28);
         setLast(last-28);
         setCount(count-1)
+        }
     }
-    }
+
     const filter = async (term) => {
         if(term == "all"){
             router.push("/home")
@@ -64,22 +72,19 @@ export default function Home() {
         } else if(term == "50"){
             router.push(`/home?filter=${50}`)
             const { data : fiftydata, error : fiftyerror} = await supabase.from('products').select().lte('price', 50)
-            setCopyoproducts(fiftydata);
+            setCopyoproducts(fiftydata || []);
         } else if(term == "50-200"){
             router.push(`/home?filter=${"50-200"}`)
             const { data : middata, error : miderror} = await supabase.from('products').select().gt('price', 50).lte('price', 200)
-            setCopyoproducts(middata);
+            setCopyoproducts(middata || []);
         } else if(term == "200"){
             router.push(`/home?filter=${200}`)
             const { data : twohundreddata, error : twohundrederror} = await supabase.from('products').select().gt('price', 200)
-            setCopyoproducts(twohundreddata)
+            setCopyoproducts(twohundreddata || []);
         }
     }
 
-    useEffect(() => {
-        filter("all")
-    }, [products])
-    if (!products) return <div>Loading...</div>;
+    if (loading) return <div>Loading...</div>;
 
     return (
         <div className="flex flex-col gap-4 items-center">
@@ -100,10 +105,10 @@ export default function Home() {
                 </div>
             </div>
             <div className="grid grid-cols-4 gap-2">
-            {copyoproducts.map((product) => {
+            {copyoproducts?.slice(first, last).map((product) => {
                 return (
                   <Link href={`/products/${product.id}`} key={product.id} className="w-fit p-4 bg-gray-50 rounded-xl border border-gray-400">
-                        <img src={product.thumbnail}></img>
+                        <img src={product.thumbnail} alt={product.title}></img>
                         <p>{product.title}</p>
                         <p>{product.rating} stars</p>
                         <p>Brand: {product.brand}</p>
